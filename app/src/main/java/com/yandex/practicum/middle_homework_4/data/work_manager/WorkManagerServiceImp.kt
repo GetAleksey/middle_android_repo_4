@@ -7,10 +7,9 @@ import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequest
-import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.yandex.practicum.middle_homework_4.data.setting_repository.SettingContainer.Companion.DEFAULT_REFRESH_PERIOD
-import com.yandex.practicum.middle_homework_4.data.setting_repository.SettingContainer.Companion.FIST_LAUNCH_DELAY
+import com.yandex.practicum.middle_homework_4.data.setting_repository.SettingContainer.Companion.FIRST_LAUNCH_DELAY
 import com.yandex.practicum.middle_homework_4.ui.contract.SettingsRepository
 import com.yandex.practicum.middle_homework_4.ui.contract.WorkManagerService
 import kotlinx.coroutines.CoroutineScope
@@ -24,8 +23,8 @@ class WorkManagerServiceImp(
     private val settingsRepository: SettingsRepository,
     private val scope: CoroutineScope = CoroutineScope(Job() + Dispatchers.IO)
 ) : WorkManagerService {
-    private var period:Long = DEFAULT_REFRESH_PERIOD
-    private var delayed: Long = FIST_LAUNCH_DELAY
+    private var period: Long = DEFAULT_REFRESH_PERIOD
+    private var delayed: Long = FIRST_LAUNCH_DELAY
 
     init {
         scope.launch {
@@ -39,16 +38,18 @@ class WorkManagerServiceImp(
     }
 
     private fun createConstraints(): Constraints {
-        // Реализуйте метод, возвращающий Constraints
-        // В условиях укажите необходимость наличия интернет соединения.
+        return Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
     }
 
     private fun createRequest(repeat: Long, delayed: Long): PeriodicWorkRequest {
         val networkConstraints = createConstraints()
-        // Допишите реализацию метода и верните WorkRequest на периодическую задачу для RefreshWorker
-        // Интервал запуска задачи (в минутах)  = repeat.
-        // Отсрочка запуска задачи в (секундах) = delayed.
-        // Не забудьте в билдере указать constraints.
+
+        return PeriodicWorkRequest.Builder(RefreshWorker::class.java, repeat, TimeUnit.MINUTES)
+            .setInitialDelay(delayed, TimeUnit.SECONDS)
+            .setConstraints(networkConstraints)
+            .build()
     }
 
     override fun launchRefreshWork() {
